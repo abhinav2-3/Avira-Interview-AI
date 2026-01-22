@@ -128,13 +128,20 @@ export interface StartResponse {
   sessionId: string;
   question: string;
   questionId: string;
+  message?: string;
   progress?: {
     current: number;
     total: number;
     remaining: number;
   };
 }
-
+export interface SubmitUserResponse {
+  success: boolean;
+  userId: string;
+  resumeId?: string;
+  jdId?: string;
+  message?: string;
+}
 export interface NextResponse {
   success: boolean;
   question?: string;

@@ -92,7 +92,7 @@ export function useGeminiAudio({
 
       console.log("[Gemini Hook] Question sent, phase set to AI_SPEAKING");
     },
-    [phaseRef]
+    [phaseRef],
   );
 
   const connect = useCallback(
@@ -118,10 +118,12 @@ export function useGeminiAudio({
       try {
         const ai = new GoogleGenAI({ apiKey });
 
-        audioContextRef.current = new (window.AudioContext ||
-          (window as any).webkitAudioContext)({ sampleRate: OUT_SAMPLE_RATE });
-        inputContextRef.current = new (window.AudioContext ||
-          (window as any).webkitAudioContext)({ sampleRate: PCM_SAMPLE_RATE });
+        audioContextRef.current = new (
+          window.AudioContext || (window as any).webkitAudioContext
+        )({ sampleRate: OUT_SAMPLE_RATE });
+        inputContextRef.current = new (
+          window.AudioContext || (window as any).webkitAudioContext
+        )({ sampleRate: PCM_SAMPLE_RATE });
 
         const analyser = audioContextRef.current.createAnalyser();
         analyser.fftSize = 512;
@@ -151,6 +153,7 @@ STRICT RULES:
 4. You will NEVER receive or respond to the candidate's answers
 5. The candidate's speech is being transcribed separately - you will not hear it
 6. DO NOT generate any conversational responses, acknowledgments, or follow-ups
+7. User will speaks in English only, if user speak any other language, listen carefully translate in english
 
 Example:
 Input: "Ask the candidate this question: Tell me about your experience?"
@@ -182,7 +185,7 @@ Then: Complete silence until next instruction.`,
                 const processor = inputContextRef.current.createScriptProcessor(
                   4096,
                   1,
-                  1
+                  1,
                 );
 
                 processor.onaudioprocess = (e) => {
@@ -191,12 +194,20 @@ Then: Complete silence until next instruction.`,
 
                   // 🔍 DEBUG: Detailed logging
                   if (Math.random() < 0.01) {
-                    console.log("[Audio Pipeline] Running - Phase:", currentPhase, "Mic:", micOn);
+                    console.log(
+                      "[Audio Pipeline] Running - Phase:",
+                      currentPhase,
+                      "Mic:",
+                      micOn,
+                    );
                   }
 
                   if (currentPhase !== "USER_SPEAKING") {
                     if (Math.random() < 0.02) {
-                      console.warn("[Audio Pipeline] ⚠️ Blocked - Phase is:", currentPhase);
+                      console.warn(
+                        "[Audio Pipeline] ⚠️ Blocked - Phase is:",
+                        currentPhase,
+                      );
                     }
                     return;
                   }
@@ -210,11 +221,16 @@ Then: Complete silence until next instruction.`,
 
                   // Check audio levels
                   const inputData = e.inputBuffer.getChannelData(0);
-                  const volume = Math.max(...Array.from(inputData).map(Math.abs));
-                  
+                  const volume = Math.max(
+                    ...Array.from(inputData).map(Math.abs),
+                  );
+
                   // Log when we detect sound
                   if (volume > 0.01 && Math.random() < 0.05) {
-                    console.log("[Audio Pipeline] 🎤 SOUND DETECTED! Volume:", volume.toFixed(4));
+                    console.log(
+                      "[Audio Pipeline] 🎤 SOUND DETECTED! Volume:",
+                      volume.toFixed(4),
+                    );
                   }
 
                   const pcmBlob = createPcmBlob(inputData);
@@ -222,43 +238,54 @@ Then: Complete silence until next instruction.`,
                   sessionPromise.then((session) => {
                     if (activeSessionRef.current === session) {
                       session.sendRealtimeInput({ media: pcmBlob });
-                      
+
                       if (Math.random() < 0.005) {
                         console.log("[Audio Pipeline] ✅ Audio sent to Gemini");
                       }
                     } else {
-                      console.error("[Audio Pipeline] ❌ Session mismatch - not sending audio");
+                      console.error(
+                        "[Audio Pipeline] ❌ Session mismatch - not sending audio",
+                      );
                     }
                   });
                 };
 
                 source.connect(processor);
                 processor.connect(inputContextRef.current.destination);
-                
-                console.log("[Gemini Hook] ═══════════════════════════════════");
+
+                console.log(
+                  "[Gemini Hook] ═══════════════════════════════════",
+                );
                 console.log("[Gemini Hook] ✅ AUDIO PIPELINE CONNECTED");
-                console.log("[Gemini Hook] ═══════════════════════════════════");
+                console.log(
+                  "[Gemini Hook] ═══════════════════════════════════",
+                );
                 console.log("[Gemini Hook] Source:", source);
                 console.log("[Gemini Hook] Processor:", processor);
-                console.log("[Gemini Hook] Input Context State:", inputContextRef.current.state);
-                
+                console.log(
+                  "[Gemini Hook] Input Context State:",
+                  inputContextRef.current.state,
+                );
+
                 // Test if processor is working
                 let testCounter = 0;
                 const originalProcess = processor.onaudioprocess;
                 processor.onaudioprocess = (e) => {
                   testCounter++;
                   if (testCounter === 1) {
-                    console.log("[Gemini Hook] 🎉 FIRST AUDIO PROCESS EVENT FIRED!");
+                    console.log(
+                      "[Gemini Hook] 🎉 FIRST AUDIO PROCESS EVENT FIRED!",
+                    );
                   }
                   if (originalProcess) originalProcess.call(processor, e);
                 };
-                
+
                 console.log("[Gemini Hook] Processor event handler attached");
 
                 if (initialQuestion) {
                   console.log(
                     "[Gemini Hook] Sending initial question:",
-                    initialQuestion
+                    initialQuestion,
                   );
                   sessionPromise.then((session) => {
                     if (activeSessionRef.current === session) {
@@ -292,7 +319,7 @@ Then: Complete silence until next instruction.`,
                 ) {
                   console.warn(
                     "[Gemini Hook] ⚠️ Ignoring AI audio - wrong phase:",
-                    phaseRef.current
+                    phaseRef.current,
                   );
                   return;
                 }
@@ -303,13 +330,13 @@ Then: Complete silence until next instruction.`,
                 const ctx = audioContextRef.current;
                 nextStartTimeRef.current = Math.max(
                   nextStartTimeRef.current,
-                  ctx.currentTime
+                  ctx.currentTime,
                 );
 
                 const audioBuffer = await decodeAudioData(
                   base64ToUint8Array(audioData),
                   ctx,
-                  OUT_SAMPLE_RATE
+                  OUT_SAMPLE_RATE,
                 );
 
                 const source = ctx.createBufferSource();
@@ -332,7 +359,7 @@ Then: Complete silence until next instruction.`,
                     currentUserTextRef.current = "";
                     onStreamingTextChange("");
                     console.log(
-                      "[Gemini Hook] Phase set to USER_SPEAKING - Waiting for manual submit"
+                      "[Gemini Hook] Phase set to USER_SPEAKING - Waiting for manual submit",
                     );
                   }
                 };
@@ -344,29 +371,29 @@ Then: Complete silence until next instruction.`,
               if (userInput) {
                 console.log(
                   "[Gemini Hook] 📝 Received transcription:",
-                  userInput
+                  userInput,
                 );
 
                 if (phaseRef.current !== "USER_SPEAKING") {
                   console.log(
                     "[Gemini Hook] 🚫 Ignoring transcription - not user's turn, phase:",
-                    phaseRef.current
+                    phaseRef.current,
                   );
                   return;
                 }
 
                 console.log(
                   "[Gemini Hook] ✅ Processing user transcription:",
-                  userInput
+                  userInput,
                 );
-                
+
                 // STEP 2: Just accumulate text, NO setTimeout, NO onAnswerComplete
                 currentUserTextRef.current += userInput;
                 onStreamingTextChange(currentUserTextRef.current);
-                
+
                 console.log(
                   "[Gemini Hook] 📊 Accumulated text length:",
-                  currentUserTextRef.current.length
+                  currentUserTextRef.current.length,
                 );
               }
 
@@ -394,9 +421,11 @@ Then: Complete silence until next instruction.`,
 
             onclose: () => {
               console.log("[Gemini Hook] Connection closed");
-              console.warn("[Gemini Hook] ⚠️ Connection closed unexpectedly - checking if intentional");
+              console.warn(
+                "[Gemini Hook] ⚠️ Connection closed unexpectedly - checking if intentional",
+              );
               onConnectedChange(false);
-              
+
               // Only show error if not intentionally closed
               if (activeSessionRef.current) {
                 console.error("[Gemini Hook] Unexpected disconnect");
@@ -406,23 +435,34 @@ Then: Complete silence until next instruction.`,
 
             onerror: (error) => {
               console.error("[Gemini Hook] Connection error:", error);
-              console.error("[Gemini Hook] Full error details:", JSON.stringify(error, null, 2));
+              console.error(
+                "[Gemini Hook] Full error details:",
+                JSON.stringify(error, null, 2),
+              );
               onError("Connection Error - Check console for details");
             },
           },
         });
 
-        sessionPromise.then((session) => {
-          activeSessionRef.current = session;
-          console.log("[Gemini Hook] ✅ Session established successfully");
-          console.log("[Gemini Hook] Session object:", session);
-        }).catch((err) => {
-          console.error("[Gemini Hook] ❌ Session establishment failed:", err);
-          onError("Failed to establish Gemini session");
-        });
+        sessionPromise
+          .then((session) => {
+            activeSessionRef.current = session;
+            console.log("[Gemini Hook] ✅ Session established successfully");
+            console.log("[Gemini Hook] Session object:", session);
+          })
+          .catch((err) => {
+            console.error(
+              "[Gemini Hook] ❌ Session establishment failed:",
+              err,
+            );
+            onError("Failed to establish Gemini session");
+          });
       } catch (e) {
         console.error("[Gemini Hook] Connection error:", e);
-        console.error("[Gemini Hook] Error stack:", e instanceof Error ? e.stack : "No stack");
+        console.error(
+          "[Gemini Hook] Error stack:",
+          e instanceof Error ? e.stack : "No stack",
+        );
         onError("System Error");
       }
     },
@@ -436,7 +476,7 @@ Then: Complete silence until next instruction.`,
       onTranscriptAdd,
       onConnectedChange,
       onError,
-    ]
+    ],
   );
 
   return {

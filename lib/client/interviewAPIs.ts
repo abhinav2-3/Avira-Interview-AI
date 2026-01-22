@@ -1,4 +1,4 @@
-import { StartResponse, NextResponse } from "../types";
+import { StartResponse, NextResponse, SubmitUserResponse } from "../types";
 
 /**
  * Start a new interview session
@@ -45,9 +45,8 @@ export async function startInterviewSession(
   });
 
   const data: StartResponse = await response.json();
-
-  if (!data.success || !data.sessionId || !data.question) {
-    throw new Error("Failed to start interview session");
+  if (response.status === 500) {
+    throw new Error(data.message || "Failed to submit answer");
   }
 
   return data;
@@ -76,20 +75,11 @@ export async function submitAnswerAndGetNext(params: {
   });
 
   const data: NextResponse = await response.json();
-
-  if (!data.success) {
+  if (response.status === 500) {
     throw new Error(data.message || "Failed to submit answer");
   }
 
   return data;
-}
-
-export interface SubmitUserResponse {
-  success: boolean;
-  userId: string;
-  resumeId?: string;
-  jdId?: string;
-  message?: string;
 }
 
 const dummySubmitUserResponse: SubmitUserResponse = {
@@ -118,8 +108,8 @@ export async function submitUserResume(
 
   const data: SubmitUserResponse = await response.json();
 
-  if (!data.success) {
-    throw new Error(data.message || "Failed to submit user information");
+  if (response.status === 500) {
+    throw new Error(data.message || "Failed to submit answer");
   }
 
   return data;

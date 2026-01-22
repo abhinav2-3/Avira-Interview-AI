@@ -19,7 +19,7 @@ export default function Dashboard() {
   const router = useRouter();
   const [error, setError] = useState("");
   const { config, transcript, analytics, setAnalytics } = useInterview();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // useEffect(() => {
   //   const generateReport = async () => {

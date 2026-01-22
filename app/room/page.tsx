@@ -120,6 +120,7 @@ export default function InterviewRoom() {
   const [loadingMessage, setLoadingMessage] = useState("Initializing...");
   const [currentQuestion, setCurrentQuestion] = useState<string>("");
   const [isSessionEnded, setIsSessionEnded] = useState(false);
+  const [isSessionClosed, setIsSessionClosed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitEnabled, setIsSubmitEnabled] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -307,21 +308,17 @@ export default function InterviewRoom() {
       if (!data.success) {
         console.log("[Interview] 🏁 Interview ended");
         setError(`Failed to submit : ${data.message}`);
-        // phaseRef.current = "ENDED";
-        // setIsSessionEnded(true);
-        // geminiAudioRef.current?.cleanup();
-        // localStorage.removeItem("currentSession");
-        return;
-      }
-      if (data.end) {
-        console.log("[Interview] 🏁 Interview ended");
         phaseRef.current = "ENDED";
         setIsSessionEnded(true);
         geminiAudioRef.current?.cleanup();
         localStorage.removeItem("currentSession");
+        router.push("/");
         return;
       }
 
+      if (data.end) {
+        setIsSessionClosed(true);
+      }
       // Update refs and state
       currentQuestionIdRef.current = data.questionId!;
       setCurrentQuestion(data.question!);
@@ -537,12 +534,14 @@ export default function InterviewRoom() {
     console.log("[Interview] 🛑 Ending interview...");
 
     if (currentUserTextRef.current.trim()) {
-      const answer = currentUserTextRef.current.trim();
+      const answer =
+        currentUserTextRef.current.trim() ||
+        "I want to end this session, Thank you";
       console.log("[Interview] 📝 Submitting final answer");
 
       addTranscriptItem({
         role: "user",
-        text: answer,
+        text: answer || "No Answer",
         timestamp: Date.now(),
       });
 
@@ -551,9 +550,11 @@ export default function InterviewRoom() {
       await handleAnswerComplete("", true);
     }
 
-    geminiAudio.cleanup();
-    localStorage.removeItem("currentSession");
-    router.push("/dashboard");
+    if (isSessionClosed) {
+      geminiAudio.cleanup();
+      localStorage.removeItem("currentSession");
+      router.push("/dashboard");
+    }
   };
 
   // LOADING STATE

@@ -17,7 +17,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Nexus Interview AI",
+  title: "Avira Interview AI",
   description: "Master your technical interview with real-time AI simulation.",
 };
 

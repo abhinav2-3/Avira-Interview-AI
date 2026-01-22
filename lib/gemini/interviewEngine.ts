@@ -17,7 +17,7 @@ export default class InterviewEngine {
     const position = settings.position || "Full Stack Engineer";
     const difficulty = settings.difficulty || "medium";
 
-    return `You are "Nexus", a "senior software engineer" conducting a technical interview for a ${position} role.
+    return `You are "Avira", a "senior software engineer" conducting a technical interview for a ${position} role.
 
 **Your Personality:**
 - Warm and approachable, but professional
@@ -93,12 +93,12 @@ Your goal is to assess their skills while making them feel comfortable enough to
   async generateFirstQuestion(
     resumeParsed: any,
     jdParsed: any,
-    settings: ISetting
+    settings: ISetting,
   ) {
     const systemPrompt = this.buildSystemPrompt(
       resumeParsed,
       jdParsed,
-      settings
+      settings,
     );
     this.session.systemPrompt = systemPrompt;
 
@@ -135,14 +135,14 @@ Task: Generate the first interview question (one). Return a only in JSON object:
     settings: {
       position: string;
       isQuestionEnd: boolean;
-    }
+    },
   ): string {
     const summary = this.session.contextSummary || "";
     const shortHistory = lastQA
       .slice(-MAX_HISTORY)
       .map(
         (q: any, i: number) =>
-          `Q${i + 1}: ${q.question}\nA${i + 1}: ${q.answer || "(no answer)"}`
+          `Q${i + 1}: ${q.question}\nA${i + 1}: ${q.answer || "(no answer)"}`,
       )
       .join("\n---\n");
 
@@ -227,7 +227,7 @@ IMPORTANT:
     userAnswer: string,
     resumeParsed: object,
     jdParsed: object,
-    settings: any
+    settings: any,
   ) {
     // sessionModel is the Mongoose document for the session (with qaHistory)
     const lastQA = sessionModel.qaHistory || [];
@@ -244,7 +244,7 @@ IMPORTANT:
       qaForPrompt,
       resumeParsed,
       jdParsed,
-      settings
+      settings,
     );
     const modelResponse = await callLLM(prompt, {
       model: "gemini-2.5-flash",

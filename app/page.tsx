@@ -23,7 +23,7 @@ export default function Landing() {
           mounted ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
         }`}
       >
-        <div className="text-sm font-bold tracking-widest uppercase">Nexus</div>
+        <div className="text-sm font-bold tracking-widest uppercase">Avira</div>
         <button
           onClick={() => router.push("/setup")}
           className="text-xs font-medium text-neutral-400 hover:text-white cursor-pointer transition-colors tracking-wide"
@@ -139,7 +139,7 @@ export default function Landing() {
         }`}
       >
         <p className="text-[10px] text-neutral-600 font-mono uppercase tracking-widest">
-          Nexus Systems Inc.
+          Avira Systems Inc.
         </p>
       </footer>
     </div>

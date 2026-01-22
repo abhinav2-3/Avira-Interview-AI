@@ -31,10 +31,10 @@ export const PLAN_LIMITS = {
 export const getSystemInstruction = (
   domain: string,
   difficulty: Difficulty,
-  resumeText?: string
+  resumeText?: string,
 ) => `
 You are an expert technical interviewer conducting a voice-based video interview.
-Your persona is "Nexus", a professional, polite, but rigorous senior engineer.
+Your persona is "Avira", a professional, polite, but rigorous senior engineer.
 
 **Context:**
 - Domain: ${domain}

@@ -15,16 +15,8 @@ export async function POST(req: NextRequest) {
     if (limitCheck instanceof NextResponse) return limitCheck;
     const { user, sessionId, questionId, answerText, end = false } = limitCheck;
 
-    // const {
-    //   userId,
-    //   sessionId,
-    //   questionId,
-    //   answerText,
-    //   end = false,
-    // } = await req.json();
-
     // Validation
-    if (!sessionId || !questionId || !answerText) {
+    if (!sessionId || !questionId) {
       return NextResponse.json(
         {
           success: false,
@@ -34,15 +26,6 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
     }
-
-    // Fetch user
-    // const user = await User.findById(userId);
-    // if (!user) {
-    //   return NextResponse.json(
-    //     { success: false, message: "User not found" },
-    //     { status: 404 }
-    //   );
-    // }
 
     // Load session
     const session = await InterviewSession.findById(sessionId);
@@ -85,13 +68,6 @@ export async function POST(req: NextRequest) {
         { status: 403 },
       );
     }
-
-    // Load documents only if needed (parallel)
-    const [resumeDoc, jdDoc] = await Promise.all([
-      session.resumeId ? Document.findById(session.resumeId) : null,
-      session.jdId ? Document.findById(session.jdId) : null,
-    ]);
-
     // Update answer in history
     const qaHistory = session.qaHistory || [];
     const questionIndex = qaHistory.findIndex(
@@ -124,17 +100,7 @@ export async function POST(req: NextRequest) {
         .map((r: any) => `Q:${r.question} A:${r.answer || ""}`)
         .join("\n");
 
-      // Generate closing message
-      // const engine = new InterviewEngine(session);
-      // const parsed = await engine.processAnswerAndGenerateNext(
-      //   session,
-      //   answerText,
-      //   resumeDoc?.parsed,
-      //   jdDoc?.parsed,
-      //   { position: session.systemPrompt, isQuestionEnd: true }
-      // );
-
-      const nextQuestion =
+      const question =
         "Thank you for your time. The interview is now complete.";
 
       // Parallel save and update
@@ -154,16 +120,25 @@ export async function POST(req: NextRequest) {
         updatedAt: q.updatedAt,
       }));
 
-      return NextResponse.json({
-        success: true,
-        end: true,
-        questionId: uuidv4(),
-        nextQuestion,
-        transcript,
-        sessionComplete: true,
-        completionReason: end ? "user_ended" : "max_questions",
-      });
+      return NextResponse.json(
+        {
+          success: true,
+          end: true,
+          questionId: uuidv4(),
+          question,
+          transcript,
+          sessionComplete: true,
+          completionReason: end ? "user_ended" : "max_questions",
+        },
+        { status: 200 },
+      );
     }
+
+    // Load documents only if needed (parallel)
+    const [resumeDoc, jdDoc] = await Promise.all([
+      session.resumeId ? Document.findById(session.resumeId) : null,
+      session.jdId ? Document.findById(session.jdId) : null,
+    ]);
 
     // Normal flow: Generate next question
     const engine = new InterviewEngine(session);
@@ -181,13 +156,13 @@ export async function POST(req: NextRequest) {
         {
           success: true,
           end: true,
-          nextQuestion:
+          question:
             "There is something problem in this session. Please restart.",
           questionId: uuidv4(),
           topic: "General",
           difficulty: "No",
         },
-        { status: 500 },
+        { status: 200 },
       );
     }
 
