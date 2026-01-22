@@ -57,11 +57,6 @@ export default function Setup() {
         if (jd) formData.append("jd", jd);
         formData.append("questionLimit", "10");
 
-        // const response = await fetch("/api/users", {
-        //   method: "POST",
-        //   body: formData,
-        // });
-
         const data = await submitUserResume(formData);
 
         if (!data.success) {
