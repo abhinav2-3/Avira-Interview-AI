@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/server/mongodb";
 import User, { IUser } from "@/models/userModel";
-import path from "path";
 import { extractTextFromPdf } from "@/lib/textHandlers";
 import DocumentModel from "@/models/documentModel";
 import { parseWithGemini } from "@/lib/gemini/llmServices";
 import { generateUniqueID } from "@/models/modelCounter";
 import InterviewModel from "@/models/interviewModel";
 import { PLAN_LIMITS } from "@/lib/constants";
-import { writeFile, mkdir } from "fs/promises";
+
 
 export async function GET(request: NextRequest) {
   await connectDB();
@@ -43,18 +42,20 @@ export async function POST(request: NextRequest) {
     }
     // console.log("Handling File");
     // Convert PDF file to buffer
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const fileName = `${file.name}-${Date.now()}`;
-    const uploadsDir = path.join(process.cwd(), "uploads");
-    const filePath = path.join(uploadsDir, fileName);
+    // const buffer = Buffer.from(await file.arrayBuffer());
+    // const fileName = `${file.name}-${Date.now()}`;
+    // const uploadsDir = path.join(process.cwd(), "uploads");
+    // const filePath = path.join(uploadsDir, fileName);
 
     // Ensure uploads directory exists
-    await mkdir(uploadsDir, { recursive: true });
-    await writeFile(filePath, buffer);
+    // await mkdir(uploadsDir, { recursive: true });
+    // await writeFile(filePath, buffer);
 
     // Extract text from resume
     // console.log("Extracting Text from RESUME");
-    const resumeRawText = await extractTextFromPdf(filePath);
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const resumeRawText = await extractTextFromPdf(buffer);
+    // const resumeRawText = await extractTextFromPdf(filePath);
 
     // Parse resume using Gemini
     // console.log("Parsing Resume");
