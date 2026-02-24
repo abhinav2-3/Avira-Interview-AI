@@ -1,4 +1,13 @@
 import mongoose from "mongoose";
+import "@/models/userModel";
+import "@/models/interviewModel";
+import "@/models/documentModel";
+import "@/models/evaluationModel";
+
+export { default as User } from "@/models/userModel";
+export { default as InterviewModel } from "@/models/interviewModel";
+export { default as DocumentModel } from "@/models/documentModel";
+export { default as Evaluation } from "@/models/evaluationModel";
 
 const MONGODB_URI = process.env.MONGODB_URI as string;
 

@@ -1,71 +1,68 @@
 import { evaluationPrompt } from "@/lib/constants";
 import { callLLM } from "@/lib/gemini/llmServices";
-import connectDB from "@/lib/server/mongodb";
-import Evaluation from "@/models/evaluationModel";
-import DocumentModel from "@/models/documentModel";
-import InterviewModel from "@/models/interviewModel";
+import connectDB, { DocumentModel, Evaluation, InterviewModel } from "@/lib/server/mongodb";
 import { NextResponse } from "next/server";
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ sessionId: string }> }
-) {
+// ── 1. Evaluate Candidate ───
+
+export async function GET(req: Request, { params }: { params: Promise<{ sessionId: string }> }) {
   const { sessionId } = await params;
 
   try {
     await connectDB();
 
+    // ── 1. Load & validate session ───
     const session = await InterviewModel.findById(sessionId)
-      .populate({ path: "userId", select: "userType" })
+      .populate({ path: "userId", select: "-limits -createdAt -updatedAt -__v" })
       .lean();
 
-    if (!session)
+    if (!session) {
       return NextResponse.json(
-        { success: false, message: "Invalid session" },
+        { success: false, message: "Session not found, please try again" },
         { status: 404 }
       );
-    if ((session.userId as any).userType == "GUEST")
+    }
+
+    if ((session.userId as any).userType === "GUEST") {
       return NextResponse.json(
-        { success: false, message: "Please login to for evaluation" },
+        { success: false, message: "Please login for evaluation" },
         { status: 400 }
       );
+    }
 
-    const existingEvaluation = await Evaluation.findOne({
-      interviewId: sessionId,
-    }).lean();
-
-    if (existingEvaluation)
+    // ── 2. Return existing evaluation if already generated ──
+    const existingEvaluation = await Evaluation.findOne({ interviewId: sessionId }).lean();
+    if (existingEvaluation) {
       return NextResponse.json(
-        { success: true, evaluation: existingEvaluation },
+        { success: true, evaluation: existingEvaluation, user: session.userId },
         { status: 200 }
       );
+    }
 
-    const resume = await DocumentModel.findById(session.resumeId).select(
-      "parsed"
-    );
-    const jd = await DocumentModel.findById(session.jdId).select("parsed");
+    // ── 3. Load documents (parallel) ──
+    const [resume, jd] = await Promise.all([
+      DocumentModel.findById(session.resumeId).select("parsed").lean(),
+      DocumentModel.findById(session.jdId).select("parsed").lean(),
+    ]);
 
-    const transcript = session.qaHistory.map((q) => {
-      return {
-        questionId: q.questionId,
-        question: q.question,
-        answer: q.answer || "",
-      };
-    });
+    // ── 4. Build transcript ───
+    const transcript = session.qaHistory.map((q) => ({
+      questionId: q.questionId,
+      question: q.question,
+      answer: q.answer || "",
+    }));
 
-    // 2. Generate prompt
+    // ── 5. Generate & parse evaluation via LLM ───
     const prompt = evaluationPrompt(transcript, resume?.parsed, jd?.parsed);
-
-    // 3. Call Gemini
     const text = await callLLM(prompt);
     const clean = text?.replace(/```json|```/g, "").trim();
     const evaluation = JSON.parse(clean as string);
 
-    // // 4. Store evaluation
+    // ── 6. Persist evaluation ─────
     await Evaluation.create({ interviewId: sessionId, ...evaluation });
 
-    return NextResponse.json({ success: true, evaluation }, { status: 201 });
-  } catch (err) {
+    return NextResponse.json({ success: true, evaluation, user: session.userId }, { status: 201 });
+  } catch (err: any) {
     console.error("Error in /interview/evaluate/:sessionId", err);
     return NextResponse.json(
       { success: false, message: err.message },

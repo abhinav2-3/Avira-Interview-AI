@@ -312,7 +312,7 @@ export default function InterviewRoom() {
         setIsSessionEnded(true);
         geminiAudioRef.current?.cleanup();
         localStorage.removeItem("currentSession");
-        router.push("/");
+        router.push(`/dashboard/${sessionIdRef.current}`);
         return;
       }
 
@@ -627,9 +627,8 @@ export default function InterviewRoom() {
         {/* Status Indicator */}
         <div className="flex items-center gap-2 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-full">
           <div
-            className={`w-2 h-2 rounded-full ${
-              isConnected ? "bg-green-500" : "bg-red-500"
-            }`}
+            className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"
+              }`}
           />
           <span className="text-sm text-gray-300">
             {!isConnected
@@ -682,11 +681,10 @@ export default function InterviewRoom() {
         {/* Mic Toggle */}
         <button
           onClick={() => setIsMicOn(!isMicOn)}
-          className={`p-4 rounded-full backdrop-blur-sm transition-colors ${
-            isMicOn
-              ? "bg-blue-600/80 hover:bg-blue-700/80"
-              : "bg-red-600/80 hover:bg-red-700/80"
-          }`}
+          className={`p-4 rounded-full backdrop-blur-sm transition-colors ${isMicOn
+            ? "bg-blue-600/80 hover:bg-blue-700/80"
+            : "bg-red-600/80 hover:bg-red-700/80"
+            }`}
           title={isMicOn ? "Mute" : "Unmute"}
         >
           {isMicOn ? (
@@ -700,11 +698,10 @@ export default function InterviewRoom() {
         <button
           onClick={handleManualSubmit}
           disabled={!isSubmitEnabled}
-          className={`p-4 rounded-full backdrop-blur-sm transition-colors ${
-            isSubmitEnabled
-              ? "bg-green-600/80 hover:bg-green-700/80 cursor-pointer"
-              : "bg-gray-600/50 cursor-not-allowed opacity-50"
-          }`}
+          className={`relative p-4 rounded-full backdrop-blur-sm transition-colors ${isSubmitEnabled
+            ? "bg-green-600/80 hover:bg-green-700/80 cursor-pointer"
+            : "bg-gray-600/50 cursor-not-allowed opacity-50"
+            }`}
           title={
             isSubmitting
               ? "Submitting..."
@@ -713,10 +710,20 @@ export default function InterviewRoom() {
                 : "Speak to enable"
           }
         >
+          {/* Ping animation when enabled */}
+          {isSubmitEnabled && !isSubmitting && (
+            <>
+              <span className="absolute inset-0 rounded-full bg-green-500/40 animate-ping" />
+              <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-[11px] text-green-400 font-medium whitespace-nowrap animate-bounce">
+                Submit ↓
+              </span>
+            </>
+          )}
+
           {isSubmitting ? (
             <Loader2 className="w-6 h-6 text-white animate-spin" />
           ) : (
-            <Send className="w-6 h-6 text-white" />
+            <Send className="w-6 h-6 text-white relative z-10" />
           )}
         </button>
 
@@ -749,11 +756,10 @@ export default function InterviewRoom() {
             {transcript.map((t, i) => (
               <div
                 key={i}
-                className={`p-3 rounded-lg ${
-                  t.role === "user"
-                    ? "bg-blue-600/20 border border-blue-500/30"
-                    : "bg-gray-700/20 border border-gray-600/30"
-                }`}
+                className={`p-3 rounded-lg ${t.role === "user"
+                  ? "bg-blue-600/20 border border-blue-500/30"
+                  : "bg-gray-700/20 border border-gray-600/30"
+                  }`}
               >
                 <p className="text-xs text-gray-400 mb-1">
                   {t.role === "user" ? "You" : "AI"}
