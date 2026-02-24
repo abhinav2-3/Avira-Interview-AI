@@ -35,6 +35,11 @@ export default function App({ params }: { params: Promise<{ sessionId: string }>
         setLoading(true);
         const result = await getInterviewEvaluation(sessionId);
         setData(result);
+        if (!result.success) {
+          // Handles GUEST user, session not found, etc.
+          setError(result.message || "Failed to load evaluation.");
+          return;
+        }
         console.log("evaluation result", result);
         setError(null);
       } catch (err: any) {
@@ -89,7 +94,13 @@ export default function App({ params }: { params: Promise<{ sessionId: string }>
     );
   }
 
-  if (!data || !data.evaluation || !data.user || !data.success) return setError(data?.message || "Evaluation not found");
+  if (!data || !data.evaluation || !data.user || !data.success) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center text-white">
+        <p className="text-white/50 font-mono text-sm">{data?.message || "Evaluation not found"}</p>
+      </div>
+    );
+  }
 
   const { evaluation, user } = data;
 
