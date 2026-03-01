@@ -58,13 +58,13 @@ export default function Setup() {
         formData.append("questionLimit", "10");
 
         const data = await submitUserResume(formData);
+        // console.log("Data : ", data);
 
         if (!data.success) {
           setError(data.message || "Failed to process your information");
           console.log("ERROR:", data.message);
           return;
         }
-        console.log(data);
 
         // Store the user and document IDs in the config
         resetInterview();
@@ -182,7 +182,7 @@ export default function Setup() {
           {/* Email Section (Optional) */}
           <div className="space-y-4">
             <label className="block text-xs font-mono text-accent uppercase">
-              Email (Optional)
+              Email
             </label>
             <input
               type="email"

@@ -126,8 +126,8 @@ export async function getInterviewEvaluation(sessionId: string): Promise<Evaluat
 
   const data: EvaluationResponse = await response.json();
 
-  if (response.status === 500) {
-    throw new Error(data.message || "Failed to fetch evaluation");
+  if (!response.ok) {
+    return { ...data, statusCode: response.status };
   }
 
   return data;
@@ -176,6 +176,7 @@ const dummyEvaluationResponse: EvaluationResponse = {
 export interface EvaluationResponse {
   success: boolean;
   message?: string;
+  statusCode?: number; // Add this line
   evaluation?: {
     _id: string;
     interviewId: string;

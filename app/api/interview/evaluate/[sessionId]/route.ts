@@ -1,11 +1,18 @@
 import { evaluationPrompt } from "@/lib/constants";
 import { callLLM } from "@/lib/gemini/llmServices";
-import connectDB, { DocumentModel, Evaluation, InterviewModel } from "@/lib/server/mongodb";
+import connectDB, {
+  DocumentModel,
+  Evaluation,
+  InterviewModel,
+} from "@/lib/server/mongodb";
 import { NextResponse } from "next/server";
 
 // ── 1. Evaluate Candidate ───
 
-export async function GET(req: Request, { params }: { params: Promise<{ sessionId: string }> }) {
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ sessionId: string }> },
+) {
   const { sessionId } = await params;
 
   try {
@@ -13,29 +20,34 @@ export async function GET(req: Request, { params }: { params: Promise<{ sessionI
 
     // ── 1. Load & validate session ───
     const session = await InterviewModel.findById(sessionId)
-      .populate({ path: "userId", select: "-limits -createdAt -updatedAt -__v" })
+      .populate({ path: "userId", select: "-limits -updatedAt -__v" })
       .lean();
 
     if (!session) {
       return NextResponse.json(
         { success: false, message: "Session not found, please try again" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     if ((session.userId as any).userType === "GUEST") {
       return NextResponse.json(
-        { success: false, message: "Please login for evaluation" },
-        { status: 400 }
+        {
+          success: false,
+          message: "Please create an account to view your evaluation",
+        },
+        { status: 400 },
       );
     }
 
     // ── 2. Return existing evaluation if already generated ──
-    const existingEvaluation = await Evaluation.findOne({ interviewId: sessionId }).lean();
+    const existingEvaluation = await Evaluation.findOne({
+      interviewId: sessionId,
+    }).lean();
     if (existingEvaluation) {
       return NextResponse.json(
         { success: true, evaluation: existingEvaluation, user: session.userId },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -59,14 +71,20 @@ export async function GET(req: Request, { params }: { params: Promise<{ sessionI
     const evaluation = JSON.parse(clean as string);
 
     // ── 6. Persist evaluation ─────
-    await Evaluation.create({ interviewId: sessionId, ...evaluation });
+    const savedEvaluation = await Evaluation.create({
+      interviewId: sessionId,
+      ...evaluation,
+    });
 
-    return NextResponse.json({ success: true, evaluation, user: session.userId }, { status: 201 });
+    return NextResponse.json(
+      { success: true, evaluation: savedEvaluation, user: session.userId },
+      { status: 201 },
+    );
   } catch (err: any) {
     console.error("Error in /interview/evaluate/:sessionId", err);
     return NextResponse.json(
       { success: false, message: err.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

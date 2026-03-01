@@ -34,6 +34,7 @@
         "name": "next"
       }
     ],
+    "typeRoots": ["./types", "./node_modules/@types"],
     "strictNullChecks": true
   },
   "include": [

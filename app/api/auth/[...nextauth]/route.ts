@@ -37,11 +37,16 @@ export const authOptions: NextAuthOptions = {
             // User exists - LOGIN
             console.log(`User logged in: ${email}`);
 
-            // Update user info if changed
             if (existingUser.name !== user.name) {
               existingUser.name = user.name!;
               await existingUser.save();
               console.log(`User info updated: ${email}`);
+            }
+
+            if (existingUser.userType === "GUEST") {
+              existingUser.userType = "FREE";
+              await existingUser.save();
+              console.log(`User type updated: ${email}`);
             }
           } else {
             // User doesn't exist - SIGNUP
@@ -100,7 +105,7 @@ export const authOptions: NextAuthOptions = {
   },
 
   pages: {
-    signIn: "/auth/signin", // Custom sign-in page (optional)
+    signIn: "/login", // Custom sign-in page (optional)
     error: "/auth/error", // Error page
     // signOut: '/auth/signout',
     // verifyRequest: '/auth/verify-request',

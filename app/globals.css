@@ -42,3 +42,36 @@ body {
 .glass-panel {
   @apply bg-[#1a1a1a]/90 backdrop-blur-sm border border-border;
 }
+
+/* Workflow Requested B&W Styles */
+.container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.card {
+  background: #111;
+  padding: 40px;
+  border: 1px solid #fff;
+  width: 350px;
+  text-align: center;
+}
+
+/* Generic button class for B&W theme */
+.btn-bw {
+  margin-top: 20px;
+  padding: 12px 20px;
+  background: #fff;
+  color: #000;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  font-weight: bold;
+  transition: opacity 0.2s;
+}
+
+.btn-bw:hover {
+  opacity: 0.8;
+}

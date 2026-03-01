@@ -32,7 +32,7 @@ const LimitsSchema = new mongoose.Schema<ILimits>(
       default: () => new Date().toISOString().split("T")[0],
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const UserSchema = new mongoose.Schema<IUser>(
@@ -43,8 +43,6 @@ const UserSchema = new mongoose.Schema<IUser>(
       type: String,
       lowercase: true,
       trim: true,
-      // required: [true, "Email is required"],
-      // unique: true,
     },
     googleId: { type: String },
     userType: {
@@ -58,7 +56,7 @@ const UserSchema = new mongoose.Schema<IUser>(
     language: String,
     limits: { type: LimitsSchema },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const User =

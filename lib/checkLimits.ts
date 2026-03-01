@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import User, { IUser } from "@/models/userModel";
 import { IInterviewSession } from "@/models/interviewModel";
 
@@ -33,7 +31,7 @@ export async function checkAndUpdateDurationMiddleware(req: NextRequest) {
         "limits.lastResetDate": today,
       },
     },
-    { new: true }
+    { new: true },
   );
   // If no update happened, fetch normally
   const finalUser = user || (await User.findById(userId));
@@ -41,14 +39,14 @@ export async function checkAndUpdateDurationMiddleware(req: NextRequest) {
   if (!finalUser)
     return NextResponse.json(
       { success: false, message: "User not found" },
-      { status: 404 }
+      { status: 404 },
     );
 
   // Check limit
   if (finalUser.limits.durationUsed >= finalUser.limits.maxDurationPerDay)
     return NextResponse.json(
       { success: false, message: "Daily duration limit exceeded" },
-      { status: 403 }
+      { status: 403 },
     );
 
   return { user: finalUser, sessionId, questionId, answerText, end };
@@ -57,7 +55,7 @@ export async function checkAndUpdateDurationMiddleware(req: NextRequest) {
 export async function updateUsage(session: IInterviewSession, user: IUser) {
   // Calculate current duration
   const currentDuration = Math.floor(
-    (Date.now() - new Date(session.startedAt).getTime()) / 1000
+    (Date.now() - new Date(session.startedAt).getTime()) / 1000,
   );
 
   // Check if session exceeded limit
@@ -78,7 +76,7 @@ export async function updateUsage(session: IInterviewSession, user: IUser) {
         shouldEndSession: true,
         durationUsed: currentDuration,
       },
-      { status: 403 }
+      { status: 403 },
     );
   }
 }

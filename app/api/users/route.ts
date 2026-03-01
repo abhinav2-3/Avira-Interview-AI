@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/server/mongodb";
-import User, { IUser } from "@/models/userModel";
+import User, { ILimits, IUser } from "@/models/userModel";
 import { extractTextFromPdf } from "@/lib/textHandlers";
 import DocumentModel from "@/models/documentModel";
 import { parseWithGemini } from "@/lib/gemini/llmServices";
 import { generateUniqueID } from "@/models/modelCounter";
 import InterviewModel from "@/models/interviewModel";
 import { PLAN_LIMITS } from "@/lib/constants";
-
 
 export async function GET(request: NextRequest) {
   await connectDB();
@@ -32,36 +31,40 @@ export async function POST(request: NextRequest) {
     const difficulty = formData.get("difficulty") as string;
     const language = formData.get("language") as string;
     const jd = formData.get("jd") as string | null;
-    // const questionLimit = (formData.get("questionLimit") as string) || "5";
 
     if (!file || !name || !role || !experience) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
-    // console.log("Handling File");
-    // Convert PDF file to buffer
-    // const buffer = Buffer.from(await file.arrayBuffer());
-    // const fileName = `${file.name}-${Date.now()}`;
-    // const uploadsDir = path.join(process.cwd(), "uploads");
-    // const filePath = path.join(uploadsDir, fileName);
 
-    // Ensure uploads directory exists
-    // await mkdir(uploadsDir, { recursive: true });
-    // await writeFile(filePath, buffer);
+    // Check existing user and daily limit
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      const limits: ILimits = existingUser.limits;
+      const today = new Date().toISOString().split("T")[0];
+
+      if (
+        limits.lastResetDate === today &&
+        limits.durationUsed >= limits.maxDurationPerDay
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Daily limit exhausted. Please try again tomorrow.",
+          },
+          { status: 429 },
+        );
+      }
+    }
 
     // Extract text from resume
-    // console.log("Extracting Text from RESUME");
     const buffer = Buffer.from(await file.arrayBuffer());
     const resumeRawText = await extractTextFromPdf(buffer);
-    // const resumeRawText = await extractTextFromPdf(filePath);
 
     // Parse resume using Gemini
-    // console.log("Parsing Resume");
     const resumeParsed = await parseWithGemini(resumeRawText, "Resume");
-
-    const existingUser = await User.findOne({ email });
 
     let user: IUser | null;
 
@@ -78,7 +81,7 @@ export async function POST(request: NextRequest) {
             language,
           },
         },
-        { new: true }
+        { new: true },
       );
     } else {
       // Create new user with USRID and default questionLimit
@@ -97,8 +100,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Save Resume Document
-    // console.log("saving resume");
-    // const resumeId = await generateUniqueID("RS");
     const resumeDoc = await DocumentModel.create({
       userId: user?._id,
       type: "Resume",
@@ -108,11 +109,10 @@ export async function POST(request: NextRequest) {
 
     let jdDoc: any = null;
     if (jd) {
-      // console.log("parsing JD");
-      // const jdId = await generateUniqueID("JD");
+      // Parse JD using Gemini
       const jdParsed = await parseWithGemini(jd, "JD");
 
-      // console.log("saving JD");
+      // Save JD Document
       jdDoc = await DocumentModel.create({
         userId: user?._id,
         type: "JD",
@@ -130,13 +130,13 @@ export async function POST(request: NextRequest) {
         jdId: jdDoc?._id || null,
         ready: true,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     console.warn("Error in onboarding:", err);
     return NextResponse.json(
       { success: false, message: err.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
